@@ -1,12 +1,16 @@
-import socket
+# James Clarke
+# 25/09/2019
+
 from threading import Thread
-import pickle
-import functools
+import socket, pickle, functools
 
 BLOCK_SIZE = 1024
 CLIENT_SENTINEL = b"CLIENT_SENTINEL"
 SERVER_SENTINEL = b"SERVER_SENTINEL"
 
+# The TCP/IP server that the service runs. Data is read in
+# blocks of up to 1024 bytes, and followed by a sentinal message
+# to notify the other end of a complete message.
 class NetServer(Thread):
 
     def __init__(self, service, addr, port):
@@ -25,6 +29,8 @@ class NetServer(Thread):
             if str(client_address[0]) in self.service.conn_list:
                 self.service.conn_list[client_address[0]]()
             while True:
+                # In reality this is unnessescary as route strings are unlikely to be a kilobyte long
+                # however you never know...
                 request = b''.join(iter(functools.partial(connection.recv, BLOCK_SIZE), CLIENT_SENTINEL))
                 print("path request '{}'".format(request.decode('utf-8')))
                 if request:
@@ -37,6 +43,9 @@ class NetServer(Thread):
         finally:
             connection.close()
 
+# This is for testing, users are encouraged to develop their own 
+# code for sending to the server. NOTE, it is important to adhere
+# to the chunk size otherwise syncing errors may occur
 class NetClient(Thread):
 
     def __init__(self, ip, port):
