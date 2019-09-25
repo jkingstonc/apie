@@ -1,8 +1,11 @@
 import socket
 from threading import Thread
 import pickle
+import functools
 
-PACKET_SIZE = 128
+BLOCK_SIZE = 1024
+CLIENT_SENTINEL = b"CLIENT_SENTINEL"
+SERVER_SENTINEL = b"SERVER_SENTINEL"
 
 class NetServer(Thread):
 
@@ -20,10 +23,13 @@ class NetServer(Thread):
         try:
             print("client connected: {}".format(client_address))
             while True:
-                data = connection.recv(PACKET_SIZE)
-                print("path request '{}'".format(data.decode('utf-8')))
-                if data:
-                    connection.sendall(pickle.dumps(self.service.visit_route(data.decode('utf-8'))))
+                request = b''.join(iter(functools.partial(connection.recv, BLOCK_SIZE), CLIENT_SENTINEL))
+                print("path request '{}'".format(request.decode('utf-8')))
+                if request:
+                    return_data = pickle.dumps(self.service.visit_route(request.decode('utf-8')))
+                    for i in range(len(return_data) // BLOCK_SIZE + 1):
+                        connection.sendto(return_data[i * BLOCK_SIZE: (i + 1) * BLOCK_SIZE], client_address)
+                        connection.sendto(SERVER_SENTINEL, client_address)
                 else:
                     break
         finally:
@@ -37,8 +43,11 @@ class NetClient(Thread):
         self.address = (ip, port)
         self.socket.connect(self.address)
 
-    def send(self, msg):
-        self.socket.sendall(str.encode(msg))
-        while True:
-            data = self.socket.recv(PACKET_SIZE)
-            return pickle.loads(data)
+    def send(self, msg, addr=None):
+        if addr is None:
+            addr = self.address
+        for i in range(len(str.encode(msg)) // BLOCK_SIZE + 1):
+            self.socket.sendto(str.encode(msg)[i * BLOCK_SIZE: (i + 1) * BLOCK_SIZE], addr)
+            self.socket.sendto(CLIENT_SENTINEL, addr)
+        data = pickle.loads(b''.join(iter(functools.partial(self.socket.recv, BLOCK_SIZE), SERVER_SENTINEL)))
+        return data

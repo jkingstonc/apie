@@ -14,13 +14,12 @@ def second_api():
     return "This is the second api return!"
 
 if __name__ == "__main__":
+
     # Start the service
     s.start()
 
     # Create a client for testing!
     net = NetClient(ip="localhost", port=3141)
-    print(net.send("test/folder/api_first"))
+    print(net.send("test/folder/api_second"))
 
-    # Join the main thread to the service
-    s.net.join()
-
+    s.wait()

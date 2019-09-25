@@ -15,6 +15,10 @@ class Service:
     def start(self):
         self.net.start()
 
+    def wait(self):
+        # Join the main thread to the service
+        self.net.join()
+
     def route(self, *args, **kwargs):
         def wrapper(func):
             print("routing path {}".format(kwargs['path']))
