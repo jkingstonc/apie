@@ -4,6 +4,10 @@ from apie.net import NetClient
 # Create a new APIE service
 s = Service(ip="localhost", port=3141)
 
+@s.connection(ip="127.0.0.1")
+def connection_for_localhost():
+    print("Hello localhost!")
+
 # Create some api routes and return some data!
 @s.route(path="test/folder/api_first")
 def first_api():

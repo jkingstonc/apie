@@ -22,6 +22,8 @@ class NetServer(Thread):
         connection, client_address = self.socket.accept()
         try:
             print("client connected: {}".format(client_address))
+            if str(client_address[0]) in self.service.conn_list:
+                self.service.conn_list[client_address[0]]()
             while True:
                 request = b''.join(iter(functools.partial(connection.recv, BLOCK_SIZE), CLIENT_SENTINEL))
                 print("path request '{}'".format(request.decode('utf-8')))
