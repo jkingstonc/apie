@@ -1,4 +1,4 @@
-# apie
+# APIE
 A fast API generator written in Python3
 
 <p align="center">
