@@ -2,18 +2,24 @@
 # 25/09/2019
 
 from vfs import VFS
+from net import NetServer
+from queue import Queue
 
 # A service is a TCP/IP server that listens to connections on a desired port
 class Service: 
 
     def __init__(self):
         self.vfs = VFS()
+        self.net = NetServer(self, "localhost", 99)
+
+    def start(self):
+        self.net.start()
+        self.net.join()
 
     def route(self, *args, **kwargs):
         def wrapper(func):
             print("routing path {}".format(kwargs['path']))
             self.vfs.mount(kwargs['path'], func)
-            #func()
         return wrapper
 
     def visit_route(self, path):
