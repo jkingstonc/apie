@@ -1,5 +1,5 @@
 # APIE
-A fast API generator written in Python3
+A fast TCP/IP API framework written in Python3
 
 <p align="center">
   <img src="https://i.imgur.com/kJnculd.png">
