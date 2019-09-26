@@ -14,6 +14,9 @@ class Service:
         self.vfs = VFS()
         self.conn_list = {}
         self.net = NetServer(self, ip, port)
+        self.use_whitelist = False
+        self.whitelist = []
+        self.blacklist = []
 
     # Start the service TCP/IP server & the thread
     def start(self):
@@ -22,6 +25,14 @@ class Service:
     # Join the thread to the service thread
     def wait(self):
         self.net.join()
+
+    # Add a list of ip addresses to whitelist
+    def add_whitelist(self, ips):
+        self.whitelist+=ips
+
+    # Add a list of ip addresses to blacklist
+    def add_blacklist(self, ips):
+        self.blacklist+=ips
 
     # Decorator for when a client connects to the service
     def connection(self, *args, **kwargs):

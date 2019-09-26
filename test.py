@@ -6,6 +6,8 @@ from apie.net import NetClient
 
 # Create a new APIE service
 s = Service(ip="localhost", port=3141)
+s.use_whitelist = True
+s.add_whitelist(["127.0.0.1"])
 
 # Print "Localhost has connected!" every 
 # time localhost (127.0.0.1) connects
@@ -16,7 +18,7 @@ def connection_for_localhost():
 # Print "1-6" every time the ip 
 # range 192.168.1.0 - 192.168.1.6 connects
 @s.connection(start="192.168.1.0", end="192.168.1.6")
-def connection_for_localhost():
+def connection_for_range():
     print("1-6")
 
 # Create an api route to return a
