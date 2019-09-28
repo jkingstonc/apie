@@ -10,7 +10,7 @@ s = Service(ip="localhost")
 
 # Create an api route to return a float
 @s.route(path="multiply")
-def second_api(*args, **kwargs):
+def multiply(*args, **kwargs):
     msg = "Your ip is '{}' and your result is {}".format(
         kwargs.get("info")[0],
         kwargs.get("args")[0] * kwargs.get("args")[1]

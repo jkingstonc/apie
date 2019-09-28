@@ -11,11 +11,11 @@ import ipaddress
 # & dispatches the correct function tied to a given route
 class Service: 
 
-    def __init__(self, ip="localhost", port="3141", debug=True):
+    def __init__(self, ip="localhost", port="3141", use_whitelist=False, debug=True):
         self.routes = {}
         self.conn_list = {}
         self.net = NetServer(self, ip, port)
-        self.use_whitelist = False
+        self.use_whitelist = use_whitelist
         self.whitelist = []
         self.blacklist = []
         self.logger = Logger("SERVICE", debug)
@@ -58,15 +58,10 @@ class Service:
 
     # Called when a Net object requests a func lookup
     # for a service route
-    def visit_route(self, headder):
+    def visit_route(self, conn_info, headder):
         #func = self.vfs.visit(path)
         func = self.routes[get_requestpath(headder)]
         if func == False:
-            return "Invalid Path Specified '{}'".format(get_requestpath(headder))
+            return "Invalid Path Specified '{}'".format(get_requestpath(headder)), 3
         else:
-            result = None
-            try:
-                result = func(args=get_requestargs(headder))
-            except:
-                result = func()
-            return result
+            return func(info=conn_info, args=get_requestargs(headder)), 0
