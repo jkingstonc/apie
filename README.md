@@ -2,7 +2,7 @@
 A fast TCP/IP API framework written in Python3
 
 <p align="center">
-  <img src="https://i.imgur.com/cr1ncaq.png">
+  <img src="https://i.imgur.com/wrTSb43.png">
 </p>
 
 APIE is for those of you who need to get an API service up and running quickly!
