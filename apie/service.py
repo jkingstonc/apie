@@ -2,9 +2,7 @@
 # 25/09/2019
 
 from .protocol import *
-from .logger import Logger
-from .net import NetServer
-from queue import Queue
+from .net import *
 import ipaddress
 
 # A service is a TCP/IP server that listens to connections on a desired port
@@ -18,7 +16,7 @@ class Service:
         self.use_whitelist = use_whitelist
         self.whitelist = []
         self.blacklist = []
-        self.logger = Logger("SERVICE", debug)
+        self.logger = logging.getLogger("SERVICE")
 
     # Start the service TCP/IP server & the thread
     def start(self):
@@ -51,7 +49,7 @@ class Service:
     # Decorator for when a client requests a service route
     def route(self, *args, **kwargs):
         def wrapper(func):
-            self.logger.log("routing path '{}'".format(kwargs['path']))
+            self.logger.info("routing path '{}'".format(kwargs['path']))
             #self.vfs.mount(kwargs['path'], func)
             self.routes[kwargs['path']] = func
         return wrapper
