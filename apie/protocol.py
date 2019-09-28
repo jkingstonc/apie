@@ -1,7 +1,8 @@
 # James Clarke
 # 27/09/2019
 
-import pickle
+SUCCESS  = 0
+ERR = 1
 
 MAGIC_INDEX = 0
 PATH_INDEX = 1

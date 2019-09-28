@@ -64,4 +64,9 @@ class Service:
         if func == False:
             return "Invalid Path Specified '{}'".format(get_requestpath(headder))
         else:
-            return func(args=get_requestargs(headder))
+            result = None
+            try:
+                result = func(args=get_requestargs(headder))
+            except:
+                result = func()
+            return result
