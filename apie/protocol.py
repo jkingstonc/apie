@@ -29,6 +29,9 @@ def parse_routepayload(code, data):
         data
     )
 
+def get_serializetype(headder):
+    return headder[SERIALIZE_INDEX]
+
 def get_requestpath(headder):
     return headder[PATH_INDEX]
 

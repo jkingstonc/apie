@@ -9,10 +9,10 @@ import ipaddress
 # & dispatches the correct function tied to a given route
 class Service: 
 
-    def __init__(self, ip="localhost", port="3141", use_whitelist=False, debug=True):
+    def __init__(self, ip="localhost", port="3141", use_whitelist=False):
         self.routes = {}
         self.conn_list = {}
-        self.net = NetServer(self, ip, port)
+        self.net = NetServer(self, ip)
         self.use_whitelist = use_whitelist
         self.whitelist = []
         self.blacklist = []

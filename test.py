@@ -4,6 +4,7 @@
 from apie.service import Service
 from apie.net import NetClient
 from apie import protocol
+from apie.serialize import SER_JSON, SER_YAML
 
 # Create a new APIE service
 s = Service(ip="localhost")
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     # Start the service
     s.start()
     # Create a client for testing by connecting to service
-    net = NetClient(ip="localhost")
+    net = NetClient(ip="localhost", serialize=SER_YAML)
     # Multiply 2 numbers using the 'multiply' api we created
     result = net.send("multiply", args=(3, 4))
     # Check if the result was a success

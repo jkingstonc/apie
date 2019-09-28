@@ -1,20 +1,21 @@
 # James Clarke
 # 25/09/2019
 
+from .serialize import *
 from .protocol import *
 from threading import Thread
-import socket, json, logging, os
+import socket, json, logging, os, yaml
 
 DEFAULT_PORT = 3141
-USE_MULTITHREADING = False
+USE_MULTITHREADING = True
 BLOCK_SIZE = 128
 SIZE_INFO = 10
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "NOTSET"))
 
 # Format a message for sending by adding size headder information
-def format_msg(data):
-    return bytes(f"{len(data):<{SIZE_INFO}}", 'utf-8')+data
+def format_msg(serialize, data):
+    return bytes(f"{len(data)+len(serialize):<{SIZE_INFO}}", 'utf-8')+serialize+data
 
 # Listen for data in chunks
 def listen_for_data(sock):
@@ -28,14 +29,16 @@ def listen_for_data(sock):
             new_msg = False
         data += msg
         if len(data)-SIZE_INFO == msglen:
-            return json.loads(data[SIZE_INFO:].decode('utf-8'))
+            serialize_type = data[SIZE_INFO:SIZE_INFO+1] # Get the serialization type
+            # deserialize the data in the correct format
+            return serialize_type, deserialize(serialize_type, data[SIZE_INFO+1:].decode('utf-8'))
 
 # The TCP/IP server that the service runs. Data is read in
 # blocks of up to 1024 bytes, and followed by a sentinal message
 # to notify the other end of a complete message.
 class NetServer(Thread):
 
-    def __init__(self, service, addr, debug=True):
+    def __init__(self, service, addr):
         Thread.__init__(self)
         self.service = service
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -67,9 +70,9 @@ class NetServer(Thread):
                 payload = "Your ip is blacklisted!"
                 code = 2
             else:
-                data = listen_for_data(connection)
+                serialize_type, data = listen_for_data(connection)
                 payload, code = self.service.visit_route(client_address, data)
-            headder = format_msg(json.dumps(parse_routepayload(code, payload)).encode('utf-8'))
+            headder = format_msg(serialize_type, json.dumps(parse_routepayload(code, payload)).encode('utf-8'))
             connection.sendall(headder)
             self.logger.info("done sending data")
         finally:
@@ -81,27 +84,29 @@ class NetServer(Thread):
 # to the chunk size otherwise syncing errors may occur
 class NetClient(Thread):
 
-    def __init__(self, ip, debug=True):
+    def __init__(self, ip, serialize=SER_JSON):
         Thread.__init__(self)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.address = (ip, DEFAULT_PORT)
+        self.serialize = serialize
         self.logger = logging.getLogger("CLIENT")
 
-    def send(self, path, args=(), addr=None):
+    def send(self, path, args=(), addr=None, serialize=None):
         if addr is None:
             addr = self.address
-
+        if serialize is None:
+            serialize = self.serialize
         headder = json.dumps(parse_routereq(path, args)).encode('utf-8')
         self.socket.connect(addr)
         self.logger.info("connected to {}".format(addr))
         # send actual msg here
 
-        headder = format_msg(headder)
+        headder = format_msg(serialize, headder)
         self.socket.sendall(headder)
 
         self.logger.info("sent request data")
         
         # wait for response
-        data = listen_for_data(self.socket)
+        serialize_type, data = listen_for_data(self.socket)
         self.logger.info("recieved data & closing socket")
         return data
