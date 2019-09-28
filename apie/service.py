@@ -1,7 +1,8 @@
 # James Clarke
 # 25/09/2019
 
-from .vfs import VFS
+from .protocol import *
+from .logger import Logger
 from .net import NetServer
 from queue import Queue
 import ipaddress
@@ -10,13 +11,14 @@ import ipaddress
 # & dispatches the correct function tied to a given route
 class Service: 
 
-    def __init__(self, ip="localhost", port="3141"):
-        self.vfs = VFS()
+    def __init__(self, ip="localhost", port="3141", debug=True):
+        self.routes = {}
         self.conn_list = {}
         self.net = NetServer(self, ip, port)
         self.use_whitelist = False
         self.whitelist = []
         self.blacklist = []
+        self.logger = Logger("SERVICE", debug)
 
     # Start the service TCP/IP server & the thread
     def start(self):
@@ -49,15 +51,17 @@ class Service:
     # Decorator for when a client requests a service route
     def route(self, *args, **kwargs):
         def wrapper(func):
-            print("routing path {}".format(kwargs['path']))
-            self.vfs.mount(kwargs['path'], func)
+            self.logger.log("routing path '{}'".format(kwargs['path']))
+            #self.vfs.mount(kwargs['path'], func)
+            self.routes[kwargs['path']] = func
         return wrapper
 
     # Called when a Net object requests a func lookup
     # for a service route
-    def visit_route(self, path):
-        func = self.vfs.visit(path)
+    def visit_route(self, headder):
+        #func = self.vfs.visit(path)
+        func = self.routes[get_requestpath(headder)]
         if func == False:
-            return "Invalid Path Specified '{}'".format(path)
+            return "Invalid Path Specified '{}'".format(get_requestpath(headder))
         else:
-            return func()
+            return func(args=get_requestargs(headder))
