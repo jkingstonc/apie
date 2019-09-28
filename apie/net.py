@@ -1,10 +1,10 @@
 # James Clarke
 # 25/09/2019
 
-from .serialize import *
-from .protocol import *
+from . import serialize
+from . import protocol
 from threading import Thread
-import socket, json, logging, os, yaml
+import socket, logging, os
 
 DEFAULT_PORT = 3141
 USE_MULTITHREADING = True
@@ -31,7 +31,7 @@ def listen_for_data(sock):
         if len(data)-SIZE_INFO == msglen:
             serialize_type = data[SIZE_INFO:SIZE_INFO+1] # Get the serialization type
             # deserialize the data in the correct format
-            return serialize_type, deserialize(serialize_type, data[SIZE_INFO+1:].decode('utf-8'))
+            return serialize_type, serialize.deserialize(serialize_type, data[SIZE_INFO+1:].decode('utf-8'))
 
 # The TCP/IP server that the service runs. Data is read in
 # blocks of up to 1024 bytes, and followed by a sentinal message
@@ -70,9 +70,14 @@ class NetServer(Thread):
                 payload = "Your ip is blacklisted!"
                 code = 2
             else:
+                # Get the serialization type & the data recieved
                 serialize_type, data = listen_for_data(connection)
+                # Get the payload and the return code type
                 payload, code = self.service.visit_route(client_address, data)
-            headder = format_msg(serialize_type, json.dumps(parse_routepayload(code, payload)).encode('utf-8'))
+            # Serialize the return payload headder with the same type as the client sent with
+            headder = serialize.serialize(serialize_type, protocol.parse_routepayload(code, payload)).encode('utf-8')
+            # Format the message ready to be sent
+            headder = format_msg(serialize_type, headder)
             connection.sendall(headder)
             self.logger.info("done sending data")
         finally:
@@ -84,28 +89,26 @@ class NetServer(Thread):
 # to the chunk size otherwise syncing errors may occur
 class NetClient(Thread):
 
-    def __init__(self, ip, serialize=SER_JSON):
+    def __init__(self, ip, serialize_type=serialize.SER_JSON):
         Thread.__init__(self)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.address = (ip, DEFAULT_PORT)
-        self.serialize = serialize
+        self.serialize_type = serialize_type
         self.logger = logging.getLogger("CLIENT")
 
-    def send(self, path, args=(), addr=None, serialize=None):
+    def send(self, path, args=(), addr=None, serialize_type=None):
         if addr is None:
             addr = self.address
-        if serialize is None:
-            serialize = self.serialize
-        headder = json.dumps(parse_routereq(path, args)).encode('utf-8')
+        if serialize_type is None:
+            serialize_type = self.serialize_type
         self.socket.connect(addr)
         self.logger.info("connected to {}".format(addr))
-        # send actual msg here
-
-        headder = format_msg(serialize, headder)
+        # Serialize the parsed request with the correct type
+        headder = serialize.serialize(serialize_type, protocol.parse_routereq(path, args)).encode('utf-8')
+        # The format it ready to be sent
+        headder = format_msg(serialize_type, headder)
         self.socket.sendall(headder)
-
         self.logger.info("sent request data")
-        
         # wait for response
         serialize_type, data = listen_for_data(self.socket)
         self.logger.info("recieved data & closing socket")

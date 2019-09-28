@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # Start the service
     s.start()
     # Create a client for testing by connecting to service
-    net = NetClient(ip="localhost", serialize=SER_YAML)
+    net = NetClient(ip="localhost", serialize_type=SER_YAML)
     # Multiply 2 numbers using the 'multiply' api we created
     result = net.send("multiply", args=(3, 4))
     # Check if the result was a success
